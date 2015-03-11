@@ -135,6 +135,7 @@ public class Main {
         System.out.printf("  %s hit-rate:%.3f",
                 f.getName(), (double)hitCount / queryCount);
         System.out.println();
+        Cdb.close(m);
     }
 
     static void endWait() throws Exception {
