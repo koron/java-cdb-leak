@@ -1,0 +1,32 @@
+// vim:set sts=4 sw=4 tw=0 et ft=groovy:
+
+apply plugin: 'java'
+apply plugin: 'application'
+
+version = '0.1'
+mainClassName = 'net.kaoriya.cdb_leak.Main'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile fileTree(dir: 'libs/orig', include: '*.jar')
+    //compile fileTree(dir: 'libs/fix', include: '*.jar')
+}
+
+run {
+    if (project.hasProperty('args')) {
+        args project.args.split('\\s+')
+    }
+    if (project.hasProperty('jvmArgs')) {
+        jvmArgs project.jvmArgs.split('\\s+')
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////
+// gradle wrapper task
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.2.1'
+}
