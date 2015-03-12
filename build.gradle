@@ -11,8 +11,9 @@ repositories {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs/orig', include: '*.jar')
-    //compile fileTree(dir: 'libs/fix', include: '*.jar')
+    //compile fileTree(dir: 'libs/orig', include: '*.jar')
+    //compile files('libs/fix/suspend-cdb-1.0-fix2.jar')
+    compile files('libs/fix/suspend-cdb-1.0-fix3.jar')
 }
 
 run {
