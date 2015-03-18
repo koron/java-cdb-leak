@@ -11,7 +11,7 @@ public class Main {
 
     public static File DIR = new File("var/cdb");
     public static int FILE_COUNT = 100;
-    public static long END_WAIT_SEC = 30;
+    public static long END_WAIT_SEC = 10;
 
     public static int KEY_LEN = 64;
     public static int VALUE_LEN = 192;
@@ -25,9 +25,16 @@ public class Main {
     public static byte[][] keys;
 
     public static void main(String[] args) throws Exception {
+        String mode = args.length >= 1 ? args[0] : null;
         generateKeys(KEY_SEED);
         buildAllFiles();
-        leakTest();
+        if ("unmap".equals(mode)) {
+            unmapTest();
+        } else if ("leak".equals(mode)) {
+            leakTest();
+        } else {
+            leakTest();
+        }
         endWait();
         //removeAllFiles();
     }
@@ -111,6 +118,20 @@ public class Main {
         }
     }
 
+    static void unmapTest() throws Exception {
+        System.out.println("testing unmap");
+        System.gc();
+        Random r = new Random();
+        Map<ByteBuffer, ByteBuffer> old = queryCdb(getFile(0), r, false);
+        for (int i = 1; i < FILE_COUNT; ++i) {
+            queryCdb(getFile(i), r, false);
+        }
+        System.out.println("waiting to query old map");
+        Thread.sleep(10000);
+        query(old, r, "old map");
+        Cdb.close(old);
+    }
+
     static void leakTest() throws Exception {
         System.out.println("testing leak");
         System.gc();
@@ -121,8 +142,34 @@ public class Main {
         }
     }
 
-    static void queryCdb(File f, Random r) throws Exception {
+    static Map<ByteBuffer, ByteBuffer> queryCdb(File f, Random r)
+        throws Exception
+    {
+        return queryCdb(f, r, true);
+    }
+
+    static Map<ByteBuffer, ByteBuffer> queryCdb(
+            File f,
+            Random r,
+            boolean close)
+        throws Exception
+    {
         Map<ByteBuffer, ByteBuffer> m = Cdb.open(f);
+        query(m, r, f.getName());
+        if (close) {
+            Cdb.close(m);
+            return null;
+        } else {
+            return m;
+        }
+    }
+
+    static void query(
+            Map<ByteBuffer, ByteBuffer> m,
+            Random r,
+            String name)
+        throws Exception
+    {
         int queryCount = (int)((ENTRY_COUNT * QUERY_RATE) + 0.5f);
         int hitCount = 0;
         for (int i = 0; i < queryCount; ++i) {
@@ -133,9 +180,8 @@ public class Main {
             }
         }
         System.out.printf("  %s hit-rate:%.3f",
-                f.getName(), (double)hitCount / queryCount);
+                name, (double)hitCount / queryCount);
         System.out.println();
-        Cdb.close(m);
     }
 
     static void endWait() throws Exception {
